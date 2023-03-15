@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Violin Scale practice</title>
+</head>
+<body style="background-color:#ccc">
+<style>
+button  {
+    border-radius:5px;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/vexflow@4.0.3/build/cjs/vexflow.js"></script>
+<script src="scales.js"></script>
+<script>
+var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+var key;
+var speed;
+const sq = Math.pow(2, 1/12);
+const a1 = 440;
+const dur = [0,2,4,5,7,9,11];
+const moll = [0,2,3,5,7,8,10];
+const notes_names=['C','D','E','F','G','A','B'];
+const key_names=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+var selected;
+var notes=[];
+
+function playNote(frequency, duration) {
+  // create Oscillator node
+  var oscillator = audioCtx.createOscillator();
+
+  oscillator.type = 'sine';
+  oscillator.frequency.value = frequency; // value in hertz
+  oscillator.connect(audioCtx.destination);
+  oscillator.start();
+
+  setTimeout(
+    function() {
+      oscillator.stop();
+      playMelody();
+}, duration);
+}
+
+function playMelody() {
+  if (notes.length > 0) {
+    note = notes.pop();
+    playNote(note[0], note[1]);
+  }
+}
+
+notes_test = [
+  [659, 4],
+  [659, 4],
+  [659, 4],
+  [523, 8],
+  [0, 16],
+  [783, 16],
+  [659, 4],
+  [523, 8],
+  [0, 16],
+  [783, 16],
+  [659, 4],
+  [0, 4],
+  [987, 4],
+  [987, 4],
+  [987, 4],
+  [1046, 8],
+  [0, 16],
+  [783, 16],
+  [622, 4],
+  [523, 8],
+  [0, 16],
+  [783, 16],
+  [659, 4]
+];
+notes_test_1 = [
+  [6, 4],
+  [6, 4],
+  [6, 4],
+  [4, 8],
+  [0, 16],
+  [8, 16],
+  [8, 4],
+  [4, 8],
+  [0, 16],
+  [8, 16],
+  [8, 4],
+  [0, 4],
+  [10, 4],
+  [10, 4],
+  [10, 4],
+  [11, 8],
+  [0, 16],
+  [8, 16],
+  [5, 4],
+  [4, 8],
+  [0, 16],
+  [8, 16],
+  [6, 4]
+];
+/*for(const note of notes_test){
+    a=Math.log(note[0]/330);
+    b=Math.log(sq)
+    alert(Math.round(a/b));
+}*/
+create_sheet
+
+
+
+
+function change_key(k){
+    if(k==0){
+        k=Math.floor(1+Math.random()*12);
+        key=k;
+    } else {
+        key=k;
+    }
+    for(i=0;i<scales.length;i++){create_sheet(true,i);}
+    document.getElementById("sheets").scrollIntoView({ behavior: "smooth"});
+}
+
+function change_speed(k){
+    speed=k;
+    document.getElementById("scale").scrollIntoView({ behavior: "smooth"});
+}
+
+function create_sheet(prev,num){
+    sc = scales[num];
+    
+    if(!prev){
+        selected=num;    
+    } 
+    
+    length=1;
+
+    if(!prev){
+        num='scale';
+        for(const f of sc){
+            length+=1/(f[1]*4);
+        }    
+    } 
+    
+    w = 9/10*window.innerWidth;
+    
+    var  id_button="button"+num;
+    var  id_div="sheets";
+    if(!prev){
+        id_div='scale';
+        id_button='buttonscale';
+        length=Math.ceil(length)-1
+        w*=10/9;
+    }
+    
+
+    
+    var width=(9/50*w);
+
+    const button=document.getElementById(id_button);
+    const div = document.createElement("div");
+    
+    button.innerHTML='';
+    
+    var h=(length*150)
+    if(!prev){h+=40;button.style.height=h+'px';}
+    
+    
+    div.style = "background-color: white;";
+
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        div.style.width = "120%";            
+    }
+    div.style.height= "90%";
+    button.appendChild(div);  
+    
+
+    
+    key_s=0;
+    if(key>=8){key_s=1}
+    k=key-1;
+    if(key>=3){k--}
+    if(key>=5){k--}
+    if(key>=7){k--}
+    if(key>=10){k--}
+    if(key>=12){k--}
+    VF = Vex.Flow;
+    
+    const { Renderer, Stave, Beam } = Vex.Flow;
+    
+    // Create an SVG renderer and attach it to the DIV element named "boo".
+    //const div = document.getElementById(id);
+
+    const renderer = new Renderer(div, Renderer.Backends.SVG);
+    
+    // Configure the rendering context.
+    
+    renderer.resize(w,h);
+    const context = renderer.getContext();
+
+
+    key_name=key_names[key-1];    
+    var notes=[
+    [],
+    ];
+    var beats=0;
+    var measures=0;
+    var line=0;
+    n=0
+    count=0;
+    var place=[20,10];
+    const stave = new Stave(place[0], place[1], 120);
+    stave.addClef("treble").addKeySignature(key_name);
+    stave.setContext(context).draw();
+    place[0]=stave.x+stave.width;
+    for(const f of sc){
+        var i,j=new Number();
+        i=(f[0]-(1-k));
+        i%=7;
+        j=(f[0]-(1-k)-i)/7-key_s + 4;
+        notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1] })
+        n++;
+        count++;
+        beats+=8/f[1];
+        if(beats>=8){        
+            const stave = new Stave(place[0], place[1], 10/9*width);
+            stave.setContext(context).draw();
+            
+            /*var all_notes=[];
+            
+            var beams=[];
+            var beam_notes=[];
+            var beam_length=4;
+            for(const note of notes[line]){
+                if(note.duration>=8){
+                    beam_notes[beam_notes.length]=note;
+                } else {
+                    all_notes[all_notes.length]=note;
+                }
+                if(beam_notes.length==beam_length){
+                    len=all_notes.length;
+                    for(l=0;l<=3;l++){
+                        all_notes[len+l-1]=beam_notes[l];
+                    }
+                    beams[beams.length]=new Beam(beam_notes);
+                    beam_notes=[];
+                }
+            }*/
+            const beams = Beam.generateBeams(notes[line]);
+            const voice = new VF.Voice({ num_beats: beats, beat_value: 8 });
+            
+  
+            voice.addTickables(notes[line]);
+    
+            // Format and justify the notes.
+            new VF.Formatter().joinVoices([voice]).format([voice], width);
+
+            // Render voice
+            voice.draw(context, stave);
+            
+            
+            beams.forEach((b) => {
+                b.setContext(context).draw();
+            });
+            
+            /*beams.forEach((b) => {
+                b.setContext(context).draw();
+            });*/
+            
+            place[0]=stave.x+stave.width;
+            n=0;
+            measures++;
+            beats=0;
+            notes[line]=[];
+            /*
+            var beams=[];
+            var beam_notes=[];
+            */
+            
+        }
+        if(measures>=4 && sc.length>count){
+            line++;
+            place[0]=20
+            place[1]=100*(line)+10;
+            n=0;
+            beats=0;
+            measures=0;
+            notes[line]=[];
+            if(prev && line>=1){
+                break;
+            } else {
+            const stave = new Stave(place[0], place[1], 120);
+            stave.addClef("treble").addKeySignature(key_name);
+            stave.setContext(context).draw();
+            place[0]=stave.x+stave.width;
+            }
+        }
+    } if (!prev){
+        document.getElementById('speed').scrollIntoView({ behavior: "smooth"})
+    }
+}
+    
+function play_music(){
+    var base = Math.pow(sq, key-10)*a1;
+    if(key>=8){base/=2}
+    for(const t of scales[selected]){
+        var pow=12/7*(t[0]-1-(t[0]+6)%7) + dur[(t[0]+6)%7];
+        notes[notes.length]=[
+                Math.round(base*Math.pow(sq,pow)),
+                240*1000/(t[1]*speed)
+        ] 
+  }    
+
+ 
+    notes.reverse();
+    playMelody();
+}
+
+window.addEventListener('load', function(){
+    alert("3 Second tuning note: 440Hz")
+    playNote(440,3000);
+
+    div_sheets=document.getElementById('sheets');
+
+    for(i=0;i<scales.length;i++){
+        button=document.createElement("button");
+        button.type="button";
+        button.style.width='90%';
+        button.style.height='150px';
+        button.style.fontSize='100px';
+        button.value=i;
+        button.id='button'+i;
+        button.innerHTML='';
+        div_sheets.appendChild(button);
+        button.addEventListener('click', function(){create_sheet(false,this.value)});
+    }
+});
+</script>
+<div id="key" align="center">
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="1"> C </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="2"> Db </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="3"> D </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="4"> Eb </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="5"> E </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="6"> F </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="7"> F# </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="8"> G </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="9"> Ab </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="10"> A </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="11"> B </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="12"> H </button>
+<button type="button" style="width:90%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="0"> Random </button>
+</div>
+<div style="height:200px"> </div>
+<div id="sheets" align="center"> </div>
+<div style="height:200px"> </div>
+<div id="speed" align="center">
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="40"> 40 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="45"> 45 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="50"> 50 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="60"> 60 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="70"> 70 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="80"> 80 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="90"> 90 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="100"> 100 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="110"> 110 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="120"> 120 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="130"> 130 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="140"> 140 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="150"> 150 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="160"> 160 </button>
+<button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="180"> 180 </button>
+</div>
+<div style="height:200px"> </div>
+<div id='scale'>
+<button id='buttonscale' type="button" style="width:100%; font-size: 90px; padding:5px" onclick="play_music()"></button>
+</div>
+</div>
+</body>
+</html>
