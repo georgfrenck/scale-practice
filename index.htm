@@ -316,17 +316,21 @@ function play_music(){
                 Math.round(base*Math.pow(sq,pow)),
                 240*1000/(t[1]*speed)
         ] 
-  }    
+  }
 
- 
-    notes.reverse();
-    playMelody();
+  notes.reverse();
+  for(i=0;i<=3;i++){
+      notes[notes.length]=[0,45000/speed];
+      notes[notes.length]=[base,15000/speed];
+  }
+  playMelody();
+}
+
+function tune() {
+    playNote(440,3000);
 }
 
 window.addEventListener('load', function(){
-    alert("3 Second tuning note: 440Hz")
-    playNote(440,3000);
-
     div_sheets=document.getElementById('sheets');
 
     for(i=0;i<scales.length;i++){
@@ -343,6 +347,10 @@ window.addEventListener('load', function(){
     }
 });
 </script>
+<div align='center' id='tuner'>
+<button id='button_tune' type="button" style="height:300px; width:90%; font-size: 90px; padding:5px" onclick="tune()">Tuning note: 440Hz</button>
+</div>
+<div style="height:100px"> </div>
 <div id="key" align="center">
 <button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="1"> C </button>
 <button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="2"> Db </button>
