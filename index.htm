@@ -225,7 +225,13 @@ function create_sheet(prev,num){
         i=(f[0]-(1-k));
         i%=7;
         j=(f[0]-(1-k)-i)/7-key_s + 4;
-        notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1] })
+        if(i+(j-4)*10>=6) {
+            notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1], stem_direction: -1 })
+        } else {
+            notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1] })
+        }
+        
+        
         n++;
         count++;
         beats+=8/f[1];
