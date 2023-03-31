@@ -18,11 +18,16 @@ div     {
 <script>
 var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
 var key;
+var mode;
+var har=false;
+var mel=false;
 var speed;
 const sq = Math.pow(2, 1/12);
 const a1 = 440;
 const dur = [0,2,4,5,7,9,11];
-const moll = [0,2,3,5,7,8,10];
+const moll_nat = [0,2,3,5,7,8,10];
+const moll_har = [0,2,3,5,7,8,11];
+const moll_mel = [0,2,3,5,7,9,11];
 const notes_names=['C','D','E','F','G','A','B'];
 const key_names=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 var selected;
@@ -119,13 +124,30 @@ function change_key(k){
     } else {
         key=k;
     }
-    for(i=0;i<scales.length;i++){create_sheet(true,i);}
-    document.getElementById("sheets").scrollIntoView({ behavior: "smooth"});
+    document.getElementById("modes").scrollIntoView({ behavior: "smooth"});    
 }
 
 function change_speed(k){
     speed=k;
     document.getElementById("scale").scrollIntoView({ behavior: "smooth"});
+}
+
+function change_mode(k){
+    if(k!='dur'){
+        mode='moll';
+        har=false;
+        mel=false;
+        if(k=='moll_har'){har=true;}
+        if(k=='moll_mel'){mel=true;}
+    } else {
+        mode='dur';
+    }
+    if(k!='dur' && (key==2||key==4||key==9)){
+            alert('Na das ist ja käse, bitte andere Tonart wählen!');
+        } else {
+        for(i=0;i<scales.length;i++){create_sheet(true,i);}
+        document.getElementById("sheets").scrollIntoView({ behavior: "smooth"});
+    }
 }
 
 function create_sheet(prev,num){
@@ -191,7 +213,7 @@ function create_sheet(prev,num){
     if(key>=12){k--}
     VF = Vex.Flow;
     
-    const { Renderer, Stave, Beam } = Vex.Flow;
+    const { Renderer, Stave, Beam, Accidental } = Vex.Flow;
     
     // Create an SVG renderer and attach it to the DIV element named "boo".
     //const div = document.getElementById(id);
@@ -217,21 +239,73 @@ function create_sheet(prev,num){
     //if(mobile){place_left-=40}
     var place=[place_left,10];
     const stave = new Stave(place[0], place[1], 120);
+    if(mode!='dur'){
+        key_name=key_names[(key-(-2))%12];
+    }
     stave.addClef("treble").addKeySignature(key_name);
     stave.setContext(context).draw();
     place[0]=stave.x+stave.width;
-    for(const f of sc){
+    for(a=0;a<sc.length;a++){
+        f=sc[a]
         var i,j=new Number();
         i=(f[0]-(1-k));
         i%=7;
+        var stem_dir=1;
         j=(f[0]-(1-k)-i)/7-key_s + 4;
         if(i+(j-4)*10>=6) {
-            notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1], stem_direction: -1 })
-        } else {
-            notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1] })
+            stem_dir=-1;
         }
-        
-        
+        acc='';
+        var mel_67=true;
+        if (a>0&&sc[a-1][0]>f[0]){mel_67=false}
+        if(mel && mel_67){
+            if((f[0]-1)%7==5){
+                if(key==5||key==7||key==10||key==12){
+                    acc='#';
+                }
+                if(key==1||key==3||key==6||key==8||key==11){
+                    acc='n';
+                }
+            }
+            if((f[0]-1)%7==6){
+                if((key==3||key==5||key==7||key==8||key==10||key==12)){
+                    acc='#';
+                } 
+                if((key==1||key==6||key==11)){
+                    acc='n';
+                }             
+            }
+        }
+        if(mel&&!mel_67){
+            if((f[0]-1)%7==5){
+                if(key==5||key==7||key==10||key==12){
+                    acc='n';
+                }
+                if(key==1||key==3||key==6||key==8||key==11){
+                    acc='b';
+                }
+            }
+            if((f[0]-1)%7==6){
+                if(mel && (f[0]%8==7) && (key==3||key==5||key==7||key==8||key==10||key==12)){
+                    acc='n';
+                } 
+                if(mel && (f[0]%8==7) && (key==1||key==6||key==11)){
+                    acc='b';
+                }             
+            }        
+        }
+        if(har && ((f[0]-1)%7==6) && (key==3||key==5||key==7||key==8||key==10||key==12)){
+            acc='#';
+        } 
+        if(har && ((f[0]-1)%7==6) && (key==1||key==6||key==11)){
+            acc='n';
+        } 
+
+        if (acc=='' || mode=='dur'){
+            notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+'/'+j], duration: f[1], stem_direction: stem_dir }) 
+        } else {
+            notes[line][n] = new VF.StaveNote({ keys: [notes_names[i]+acc+'/'+j], duration: f[1], stem_direction: stem_dir }).addModifier(new Accidental(acc));   
+        }
         n++;
         count++;
         beats+=8/f[1];
@@ -314,22 +388,38 @@ function create_sheet(prev,num){
 }
     
 function play_music(){
-    var base = Math.pow(sq, key-10)*a1;
-    if(key>=8){base/=2}
-    for(const t of scales[selected]){
-        var pow=12/7*(t[0]-1-(t[0]+6)%7) + dur[(t[0]+6)%7];
-        notes[notes.length]=[
-                Math.round(base*Math.pow(sq,pow)),
-                240*1000/(t[1]*speed)
-        ] 
-  }
-
-  notes.reverse();
-  for(i=0;i<=3;i++){
-      notes[notes.length]=[0,45000/speed];
-      notes[notes.length]=[base,15000/speed];
-  }
-  playMelody();
+    if(notes.length==0){
+        var base = Math.pow(sq, key-10)*a1;
+        if(key>=8){base/=2}
+        for(a=0;a<scales[selected].length;a++){
+            t=scales[selected][a];
+            if(mode=='dur'){
+                var pow=12/7*(t[0]-1-(t[0]+6)%7) + dur[(t[0]+6)%7];
+            } else {
+                if(har){
+                    var pow=12/7*(t[0]-1-(t[0]+6)%7) + moll_har[(t[0]+6)%7];                   
+                } else if(mel){
+                    if(a>0 && scales[selected][a-1][0]>t[0]){
+                        var pow=12/7*(t[0]-1-(t[0]+6)%7) + moll_nat[(t[0]+6)%7]; 
+                    } else {    
+                        var pow=12/7*(t[0]-1-(t[0]+6)%7) + moll_mel[(t[0]+6)%7];               
+                    }
+                } else {           
+                    var pow=12/7*(t[0]-1-(t[0]+6)%7) + moll_nat[(t[0]+6)%7];            
+                } 
+            }
+            notes[notes.length]=[
+                    Math.round(base*Math.pow(sq,pow)),
+                    240*1000/(t[1]*speed)
+            ] 
+        }
+        notes.reverse();
+        for(i=0;i<=3;i++){
+            notes[notes.length]=[0,45000/speed];
+            notes[notes.length]=[base,15000/speed];
+        }
+        playMelody();
+    }
 }
 
 function tune() {
@@ -373,7 +463,23 @@ window.addEventListener('load', function(){
 <button type="button" style="width:90%; height:300px; font-size: 100px;" onclick="change_key(this.value)" value="0"> Random </button>
 </div>
 <div style="height:200px"> </div>
+<div id="modes" align="center">
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="dur"> Dur (natuerlich) </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="moll_nat"> Moll <span style='fond-size:30px'>(natuerlich)</span> </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="moll_mel"> Moll <span style='fond-size:30px'>(melodisch)</span> </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="moll_har"> Moll <span style='fond-size:30px'>(harmonisch)</span> </button>
+</div>
+<div style="height:200px"> </div>
 <div id="sheets" align="center"> </div>
+<!--
+<div style="height:200px"> </div>
+<div align='center' id='pattern'>
+<button id='button_dur' type="button" style="height:300px; width:90%; font-size: 90px; padding:5px" onclick="choose_pattern('dur')">Major Scales</button>
+<button id='button_dur' type="button" style="height:300px; width:90%; font-size: 90px; padding:5px" onclick="choose_pattern('dur')"> Natural Minor Scales</button>
+<button id='button_dur' type="button" style="height:300px; width:90%; font-size: 90px; padding:5px" onclick="choose_pattern('dur')">Dur-Tonleiter</button>
+<button id='button_dur' type="button" style="height:300px; width:90%; font-size: 90px; padding:5px" onclick="choose_pattern('dur')">Dur-Tonleiter</button>
+</div>
+-->
 <div style="height:200px"> </div>
 <div id="speed" align="center">
 <button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="40"> 40 </button>
