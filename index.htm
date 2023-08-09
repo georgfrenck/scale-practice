@@ -13,7 +13,8 @@ div     {
     padding-left:0px;
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/vexflow@4.0.3/build/cjs/vexflow.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/vexflow@4.0.3/build/cjs/vexflow.js"></script>-->
+<script src="vexflow.js"></script>
 <script src="scales.js"></script>
 <script>
 var audioCtx = new(window.AudioContext || window.webkitAudioContext)();
@@ -21,7 +22,10 @@ var key;
 var mode;
 var har=false;
 var mel=false;
-var speed;
+var tuningNote=false;
+var speed=300;
+var length=1;
+var width;
 const sq = Math.pow(2, 1/12);
 const a1 = 440;
 const dur = [0,2,4,5,7,9,11];
@@ -32,7 +36,15 @@ const notes_names=['C','D','E','F','G','A','B'];
 const key_names=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
 var selected;
 var notes=[];
+var oscillatorTuning = [];
 const mobile=/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+var count;
+var count_notes;
+var count_stave;
+var show_bg=true;
+const div_bg = document.createElement("div");
+
+
 
 function playNote(frequency, duration) {
   // create Oscillator node
@@ -42,7 +54,7 @@ function playNote(frequency, duration) {
   oscillator.frequency.value = frequency; // value in hertz
   oscillator.connect(audioCtx.destination);
   oscillator.start();
-
+  
   setTimeout(
     function() {
       oscillator.stop();
@@ -54,7 +66,36 @@ function playMelody() {
   if (notes.length > 0) {
     note = notes.pop();
     playNote(note[0], note[1]);
+    240*1000/(t[1]*speed)
+    count_notes+=1;
   }
+  const button=document.getElementById('buttonscale'); 
+  h=150*length+40
+  div_bg.style.position='relative';    
+  div_bg.style.height= "120px";    
+  div_bg.style.width= 10/9*width + "px";
+  button.appendChild(div_bg);  
+  if(show_bg){
+    div_bg.style.border =" 2px solid green";
+    if(count_notes>=8){
+      var note_length=scales[selected][count_notes-8][1];
+      count_stave+=4/note_length;
+      var num_stave=(count_stave-1-((count_stave-1)%4))/4;
+      //alert(num_stave);
+      var column_num=num_stave%4;
+      var line_num=(num_stave-column_num)/4;
+      var place_left=column_num*10/9*width + 140;
+      //var place_top=-length*150 + line_num*150;
+      var place_top=line_num*100-length*150*9/10 -10;
+      div_bg.style.top=place_top + 'px';
+      div_bg.style.left=place_left + 'px';
+       
+    }
+  }
+}
+
+function show_background(num){
+  
 }
 
 notes_test = [
@@ -179,11 +220,10 @@ function create_sheet(prev,num){
     
 
     
-    var width=(9/50*w);
+    width=(9/50*w);
 
-    const button=document.getElementById(id_button);
-    const div = document.createElement("div");
-    
+ 
+    const button=document.getElementById(id_button);   
     button.innerHTML='';
     
     var h=(length*150)
@@ -193,15 +233,39 @@ function create_sheet(prev,num){
     }
     
     
+    
+    
+    const div = document.createElement("div");
+    
+    
     div.style = "background-color: white;";
-
-    if (mobile) {
-        div.style.width = "120%";            
-    }
+    div.style.position='relative';    
+    div.style.left= "0px";    
+    div.style.top= "0px";  
     div.style.height= "90%";
     button.appendChild(div);  
     
-
+  
+    
+/*    if(!prev){
+        var CanvasBackground=document.createElement('canvas');
+        button.appendChild(CanvasBackground);
+        CanvasBackground.id='Background';
+        CanvasBackground.style.position='relative';
+        CanvasBackground.style.top='-'+ h*0.9 + 'px';
+        //CanvasBackground.style='background-color: yellow;';
+        CanvasBackground.style.height='90%';
+        CanvasBackground.style.width=w+'px';
+        ctx=CanvasBackground.getContext('2d');
+        ctx.beginPath();
+        ctx.rect(10,10,100,100);
+        ctx.stroke();
+    }*/
+    
+    if (mobile) {
+        div.style.width = "120%";
+        //CanvasBackground.style.width='120%';
+    }
     
     key_s=0;
     if(key>=8){key_s=1}
@@ -330,7 +394,7 @@ function create_sheet(prev,num){
                         all_notes[len+l-1]=beam_notes[l];
                     }
                     beams[beams.length]=new Beam(beam_notes);
-                    beam_notes=[];
+                    beam_notes=[];  
                 }
             }*/
             const beams = Beam.generateBeams(notes[line]);
@@ -388,6 +452,8 @@ function create_sheet(prev,num){
 }
     
 function play_music(){
+    count_notes=0;
+    count_stave=0;
     if(notes.length==0){
         var base = Math.pow(sq, key-10)*a1;
         if(key>=8){base/=2}
@@ -423,7 +489,17 @@ function play_music(){
 }
 
 function tune() {
-    playNote(440,3000);
+    tuningNote=!tuningNote;
+    
+    if(tuningNote){
+        oscillatorTuning[oscillatorTuning.length]=audioCtx.createOscillator();
+        oscillatorTuning[oscillatorTuning.length-1].type = 'sine';
+        oscillatorTuning[oscillatorTuning.length-1].frequency.value = 440; // value in hertz
+        oscillatorTuning[oscillatorTuning.length-1].connect(audioCtx.destination);
+        oscillatorTuning[oscillatorTuning.length-1].start();
+    } else {
+        oscillatorTuning[oscillatorTuning.length-1].stop();
+    }
 }
 
 window.addEventListener('load', function(){
