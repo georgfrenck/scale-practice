@@ -11,6 +11,71 @@ button  {
 }
 div     {
     padding-left:0px;
+    font-size:34px
+}
+
+.empty  {
+    width:5px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #eee;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }
 </style>
 <!--<script src="https://cdn.jsdelivr.net/npm/vexflow@4.0.3/build/cjs/vexflow.js"></script>-->
@@ -34,6 +99,7 @@ const moll_har = [0,2,3,5,7,8,11];
 const moll_mel = [0,2,3,5,7,9,11];
 const notes_names=['C','D','E','F','G','A','B'];
 const key_names=['C','Db','D','Eb','E','F','F#','G','Ab','A','Bb','B'];
+const key_names_ger=['C','Db','D','Eb','E','F','F#','G','Ab','A','B','H'];
 var selected;
 var notes=[];
 var oscillatorTuning = [];
@@ -59,6 +125,10 @@ function playNote(frequency, duration) {
     function() {
       oscillator.stop();
       playMelody();
+      
+      if(show_bg){
+        show_background();
+      }
 }, duration);
 }
 
@@ -68,34 +138,29 @@ function playMelody() {
     playNote(note[0], note[1]);
     240*1000/(t[1]*speed)
     count_notes+=1;
-  }
+  }  
+}
+
+function show_background(){
   const button=document.getElementById('buttonscale'); 
   h=150*length+40
   div_bg.style.position='relative';    
   div_bg.style.height= "120px";    
   div_bg.style.width= 10/9*width + "px";
   button.appendChild(div_bg);  
-  if(show_bg){
-    div_bg.style.border =" 2px solid green";
-    if(count_notes>=8){
-      var note_length=scales[selected][count_notes-8][1];
-      count_stave+=4/note_length;
-      var num_stave=(count_stave-1-((count_stave-1)%4))/4;
-      //alert(num_stave);
-      var column_num=num_stave%4;
-      var line_num=(num_stave-column_num)/4;
-      var place_left=column_num*10/9*width + 140;
-      //var place_top=-length*150 + line_num*150;
-      var place_top=line_num*100-length*150*9/10 -10;
-      div_bg.style.top=place_top + 'px';
-      div_bg.style.left=place_left + 'px';
-       
-    }
+  div_bg.style.border =" 2px solid green";
+  if(count_notes>=8){
+    var note_length=scales[selected][count_notes-8][1];
+    count_stave+=4/note_length;
+    var num_stave=(count_stave-1-((count_stave-1)%4))/4;
+    //alert(num_stave);
+    var column_num=num_stave%4;
+    var line_num=(num_stave-column_num)/4;
+    var place_left=column_num*10/9*width + 140;
+    var place_top=line_num*100-length*150*9/10 -10;
+    div_bg.style.top=place_top + 'px';
+    div_bg.style.left=place_left + 'px';        
   }
-}
-
-function show_background(num){
-  
 }
 
 notes_test = [
@@ -170,6 +235,7 @@ function change_key(k){
 
 function change_speed(k){
     speed=k;
+    document.getElementById("print_tempo").innerHTML=k;
     document.getElementById("scale").scrollIntoView({ behavior: "smooth"});
 }
 
@@ -189,6 +255,7 @@ function change_mode(k){
         for(i=0;i<scales.length;i++){create_sheet(true,i);}
         document.getElementById("sheets").scrollIntoView({ behavior: "smooth"});
     }
+    document.getElementById("print_key").innerHTML=key_names_ger[key-1] + ' ' + document.getElementById(k).innerHTML;
 }
 
 function create_sheet(prev,num){
@@ -452,6 +519,7 @@ function create_sheet(prev,num){
 }
     
 function play_music(){
+    show_bg=document.getElementById('mark_check').checked;
     count_notes=0;
     count_stave=0;
     if(notes.length==0){
@@ -540,10 +608,10 @@ window.addEventListener('load', function(){
 </div>
 <div style="height:200px"> </div>
 <div id="modes" align="center">
-<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="dur"> Dur (natuerlich) </button>
-<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="moll_nat"> Moll <span style='fond-size:30px'>(natuerlich)</span> </button>
-<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="moll_mel"> Moll <span style='fond-size:30px'>(melodisch)</span> </button>
-<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.value)" value="moll_har"> Moll <span style='fond-size:30px'>(harmonisch)</span> </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.id)" id="dur"> Dur (nat&uuml;rlich) </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.id)" id="moll_nat"> Moll <span style='fond-size:30px'>(nat&uuml;rlich)</span> </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.id)" id="moll_mel"> Moll <span style='fond-size:30px'>(melodisch)</span> </button>
+<button type="button" style="width:22%; height:300px; font-size: 50px;" onclick="change_mode(this.id)" id="moll_har"> Moll <span style='fond-size:30px'>(harmonisch)</span> </button>
 </div>
 <div style="height:200px"> </div>
 <div id="sheets" align="center"> </div>
@@ -575,6 +643,18 @@ window.addEventListener('load', function(){
 <button type="button" style="width:30%; height:300px; font-size: 100px;" onclick="change_speed(this.value)" value="180"> 180 </button>
 </div>
 <div style="height:200px"> </div>
+<div>
+<span style='position: absolute; left:80px'>Takt-Markierung</span>
+<label class="switch">
+<input type="checkbox" id="mark_check">
+<span class="slider round"></span>
+</label>
+<span style='position: absolute; left:35%'>Tempo:</span> <span id='print_tempo' style='position:relative; left: 40%; width:20%'></span><span class='empty'></span>
+<span style='position: absolute; left:65%'>Tonart:</span><span id='print_key' style='position:relative; left:70%; width:20%'></span><span class='empty'></span>
+</div>
+<div style="height:40px"> </div>
+<div>
+
 <div id='scale'>
 <button id='buttonscale' type="button" style="width:100%; font-size: 90px; padding:5px" onclick="play_music()"></button>
 </div>
